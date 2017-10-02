@@ -16,7 +16,7 @@ export class OutlineViewTree extends Tree {
     ) {
         super();
 
-        outlineViewManager.onDidChangeOutline(() => {
+        outlineViewManager.onDidChangeOutline(changes => {
             this.refresh();
         });
 
@@ -30,8 +30,9 @@ export class OutlineViewTree extends Tree {
 
     }
 
-    resolveChildren(parent: ICompositeTreeNode): Promise<ITreeNode[]> {
+    public resolveChildren(parent: ICompositeTreeNode): Promise<ITreeNode[]> {
 
         return super.resolveChildren(parent);
     }
 }
+

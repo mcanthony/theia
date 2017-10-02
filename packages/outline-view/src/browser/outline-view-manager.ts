@@ -6,29 +6,29 @@
 */
 
 import { injectable, inject } from "inversify";
-import { FileSystemWatcher } from "@theia/filesystem/lib/common";
+import { FileChange } from "@theia/filesystem/lib/common";
 import { Event, Emitter } from "@theia/core";
+import { EditorManager, EditorWidget } from "@theia/editor/lib/browser";
 
 @injectable()
 export class OutlineViewManager {
 
-    protected readonly onDidChangeOutlineEmitter = new Emitter<void>();
+    protected readonly onDidChangeOutlineEmitter = new Emitter<FileChange[]>();
 
     constructor(
-        @inject(FileSystemWatcher) protected fileWatcher?: FileSystemWatcher
+        @inject(EditorManager) protected editorManager: EditorManager
     ) {
-        if (fileWatcher) {
-            fileWatcher.onFilesChanged(changes => {
-                this.fireOnDidChangeOutline();
-            });
-        }
+        editorManager.onCurrentEditorChanged((editor: EditorWidget) => {
+            editor.editor.document
+            // this.fireOnDidChangeOutline();
+        });
     }
 
-    get onDidChangeOutline(): Event<void> {
+    get onDidChangeOutline(): Event<FileChange[]> {
         return this.onDidChangeOutlineEmitter.event;
     }
 
-    protected fireOnDidChangeOutline(): void {
-        this.onDidChangeOutlineEmitter.fire(undefined);
+    protected fireOnDidChangeOutline(changes: FileChange[]): void {
+        this.onDidChangeOutlineEmitter.fire(changes);
     }
 }

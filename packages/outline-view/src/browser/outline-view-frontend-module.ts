@@ -7,12 +7,15 @@
 
 import { ContainerModule } from 'inversify';
 import { OutlineViewWidget } from './outline-view-widget';
+import { OutlineViewManager } from './outline-view-manager';
 import { createOutlineViewWidget } from './outline-view-container';
 import { OutlineViewContribution } from './outline-view-contribution';
 import { WidgetFactory } from '@theia/core/lib/browser/widget-manager';
 import { FrontendApplicationContribution } from '@theia/core/lib/browser';
 
 export default new ContainerModule(bind => {
+    bind(OutlineViewManager).toSelf().inSingletonScope();
+
     bind(OutlineViewWidget).toDynamicValue(ctx =>
         createOutlineViewWidget(ctx.container)
     );

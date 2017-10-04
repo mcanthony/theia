@@ -6,6 +6,7 @@
 */
 
 import { injectable, inject } from 'inversify';
+import { SymbolInformationNode } from './outline-view-tree';
 import {
     TreeWidget,
     ITreeNode,
@@ -17,15 +18,18 @@ import {
     ContextMenuRenderer
 } from "@theia/core/lib/browser";
 import { h } from "@phosphor/virtualdom/lib";
+import SymbolInformation = monaco.modes.SymbolInformation;
 import { Message } from '@phosphor/messaging';
 
 @injectable()
 export class OutlineViewWidget extends TreeWidget {
 
+    protected symbolInformation: SymbolInformation[];
+
     constructor(
-        @inject(TreeProps) readonly treeProps: TreeProps,
+        @inject(TreeProps) protected readonly treeProps: TreeProps,
         @inject(TreeModel) readonly model: TreeModel,
-        @inject(ContextMenuRenderer) readonly contextMenuRenderer: ContextMenuRenderer
+        @inject(ContextMenuRenderer) protected readonly contextMenuRenderer: ContextMenuRenderer
     ) {
         super(treeProps, model, contextMenuRenderer);
 
@@ -46,6 +50,10 @@ export class OutlineViewWidget extends TreeWidget {
     }
 
     protected decorateCaption(node: ITreeNode, caption: h.Child, props: NodeProps): h.Child {
-        return h.div({}, node.name);
+        if (SymbolInformationNode.is(node)) {
+            return h.div({}, node.name + " child of: " + node.containerName);
+        } else {
+            return "";
+        }
     }
 }

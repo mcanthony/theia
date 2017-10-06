@@ -51,7 +51,7 @@ export class OutlineViewWidget extends TreeWidget {
 
     protected decorateCaption(node: ITreeNode, caption: h.Child, props: NodeProps): h.Child {
         if (SymbolInformationNode.is(node)) {
-            return h.div({}, node.name + " child of: " + node.containerName);
+            return h.div({}, node.name + " has children: " + node.children.length);
         } else {
             return "";
         }

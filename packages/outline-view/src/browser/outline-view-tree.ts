@@ -11,6 +11,7 @@ import { Tree, ICompositeTreeNode, ITreeNode, ISelectableTreeNode, IExpandableTr
 import { UriSelection } from "@theia/filesystem/lib/common";
 import { Range } from '@theia/editor/lib/browser';
 import SymbolInformation = monaco.modes.SymbolInformation;
+import SymbolKind = monaco.modes.SymbolKind;
 import URI from "@theia/core/lib/common/uri";
 
 @injectable()
@@ -56,7 +57,7 @@ export class OutlineViewTree extends Tree {
             containerName: symbolInformation.containerName,
             range,
             id: symbolInformation.name + "-" + range.start.line + "-" + range.start.character + "-" + range.end.line + "-" + range.start.character,
-            kind: symbolInformation.kind,
+            kind: SymbolKind[symbolInformation.kind].toLowerCase(),
             name: symbolInformation.name,
             parent,
             selected: false,
@@ -100,7 +101,7 @@ export class OutlineViewTree extends Tree {
 
 export interface SymbolInformationNode extends ICompositeTreeNode, UriSelection, ISelectableTreeNode, IExpandableTreeNode {
     containerName: string | undefined;
-    kind: number;
+    kind: string;
     range: Range
 }
 

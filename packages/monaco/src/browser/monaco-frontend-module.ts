@@ -28,6 +28,8 @@ decorate(injectable(), MonacoToProtocolConverter);
 decorate(injectable(), ProtocolToMonacoConverter);
 
 import '../../src/browser/style/index.css';
+import '../../src/browser/style/symbol-sprite.svg';
+import '../../src/browser/style/symbol-icons.css';
 
 export default new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(MonacoToProtocolConverter).toSelf().inSingletonScope();

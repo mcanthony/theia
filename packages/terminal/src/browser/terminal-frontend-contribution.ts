@@ -22,6 +22,7 @@ import { FrontendApplication } from '@theia/core/lib/browser';
 import { FileMenus } from '@theia/workspace/lib/browser/workspace-commands';
 import { TERMINAL_WIDGET_FACTORY_ID, TerminalWidgetFactoryOptions } from './terminal-widget';
 import { WidgetManager } from '@theia/core/lib/browser/widget-manager';
+import { WorkspaceService } from '@theia/workspace/lib/browser/workspace-service';
 
 export namespace TerminalCommands {
     export const NEW: Command = {
@@ -35,19 +36,24 @@ export class TerminalFrontendContribution implements CommandContribution, MenuCo
 
     constructor(
         @inject(FrontendApplication) protected readonly app: FrontendApplication,
-        @inject(WidgetManager) protected readonly widgetManager: WidgetManager
+        @inject(WidgetManager) protected readonly widgetManager: WidgetManager,
+        @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService
     ) { }
 
     registerCommands(commands: CommandRegistry): void {
-        commands.registerCommand(TerminalCommands.NEW, {
-            isEnabled: () => true,
-            execute: () => this.newTerminal()
+        this.workspaceService.root.then(() => {
+            commands.registerCommand(TerminalCommands.NEW, {
+                isEnabled: () => true,
+                execute: () => this.newTerminal()
+            });
         });
     }
 
     registerMenus(menus: MenuModelRegistry): void {
-        menus.registerMenuAction(FileMenus.OPEN_GROUP, {
-            commandId: TerminalCommands.NEW.id
+        this.workspaceService.root.then(() => {
+            menus.registerMenuAction(FileMenus.OPEN_GROUP, {
+                commandId: TerminalCommands.NEW.id
+            });
         });
     }
 

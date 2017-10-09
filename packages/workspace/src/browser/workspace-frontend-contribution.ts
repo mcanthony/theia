@@ -47,18 +47,21 @@ export class WorkspaceFrontendContribution implements CommandContribution, MenuC
     }
 
     protected showFileDialog(): void {
-        this.workspaceService.root.then(root => {
-            const rootUri = new URI(root.uri).parent;
-            this.fileSystem.getFileStat(rootUri.toString()).then(startWith => {
-                const node = DirNode.createRoot(startWith);
+        this.workspaceService.rootResolved.then(resolved => {
+            const root = resolved ? this.workspaceService.root : this.workspaceService.defaultRoot;
+            root.then(root => {
+                const rootUri = new URI(root!.uri).parent;
+                this.fileSystem.getFileStat(rootUri.toString()).then(startWith => {
+                    const node = DirNode.createRoot(startWith);
 
-                const fileDialog = this.fileDialogFactory({
-                    title: WorkspaceCommands.OPEN.label!
+                    const fileDialog = this.fileDialogFactory({
+                        title: WorkspaceCommands.OPEN.label!
+                    });
+                    fileDialog.model.navigateTo(node);
+                    fileDialog.open().then(node =>
+                        this.openFile(node)
+                    );
                 });
-                fileDialog.model.navigateTo(node);
-                fileDialog.open().then(node =>
-                    this.openFile(node)
-                );
             });
         });
     }

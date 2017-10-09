@@ -12,12 +12,23 @@ export const workspacePath = '/services/workspace';
  */
 export const WorkspaceServer = Symbol('WorkspaceServer');
 export interface WorkspaceServer {
+
     /**
-     * Return the current workspace root.
+     * Returns with a promise that resolves to the workspace root URI as a string. Resolves to `undefined` if the workspace root is not yet set.
      */
-    getRoot(): Promise<string>;
+    getRoot(): Promise<string | undefined>;
+
     /**
-     * Select a given URI as a workspace root.
+     * Returns a promise that resolves the default workspace root. This could be used, when the desired workspace root is not yet set.
+     *
+     * The default workspace location depends on the actual implementation. Could be the user home, the current working directory of the
+     * underlying process or any other arbitrary logic.
+     */
+    getDefaultRoot(): Promise<string>;
+
+    /**
+     * Sets the desired string representation of the URI as the workspace root.
      */
     setRoot(uri: string): Promise<void>;
+
 }

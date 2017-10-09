@@ -16,26 +16,51 @@ import { WorkspaceServer } from "../common";
 @injectable()
 export class WorkspaceService {
 
-    /**
-     * The current workspace root.
-     */
-    readonly root: Promise<FileStat>;
-
     constructor(
         @inject(FileSystem) protected readonly fileSystem: FileSystem,
         @inject(FileSystemWatcher) protected readonly watcher: FileSystemWatcher,
         @inject(WorkspaceServer) protected readonly server: WorkspaceServer
-    ) {
-        this.root = this.server.getRoot().then(uri =>
-            this.validateRoot(uri)
-        );
-        this.root.then(root =>
-            watcher.watchFileChanges(new URI(root.uri))
-        );
+    ) { }
+
+    /**
+     * The promise which will resolve to the currently selected workspace root.
+     * This promise resolves to the workspace root file stat, if [rootResolved](WorkspaceService.rootResolved) is `true`.
+     */
+    get root(): Promise<FileStat> {
+        const self = this;
+        return new Promise((resolve, reject) => {
+            (function waitUntilResolved() {
+                self.server.getRoot().then(uri => {
+                    if (uri) {
+                        self.validateRoot(uri).then(
+                            root => resolve(root),
+                            () => setTimeout(waitUntilResolved, 200)
+                        );
+                    }
+                    setTimeout(waitUntilResolved, 200);
+                });
+            })();
+        });
     }
 
     /**
-     * Open a given URI as the current workspace root.
+     * `true` if the workspace root is set, hence it is available and can be used by clients.
+     */
+    get rootResolved(): Promise<boolean> {
+        return this.server.getRoot().then(uri => !!uri);
+    }
+
+    /**
+     * Returns a promise resolving to the default workspace root location. This method should be used if [resolvedRoot](WorkspaceService.rootResolved) is `false`.
+     */
+    get defaultRoot(): Promise<FileStat> {
+        return new Promise((resolve, reject) => {
+            this.server.getDefaultRoot().then(uri => resolve(this.validateRoot(uri)));
+        });
+    }
+
+    /**
+     * Opens the given URI as the current workspace root.
      */
     open(uri: URI, options?: WorkspaceInput): void {
         this.validateRoot(uri.toString())
@@ -43,21 +68,27 @@ export class WorkspaceService {
             .then(() => this.openWindow(uri, options));
     }
 
-    protected validateRoot(uri: string): Promise<FileStat> {
-        return this.fileSystem.getFileStat(uri).then(fileStat => {
+    protected async validateRoot(uri: string): Promise<FileStat> {
+        try {
+            const fileStat = await this.fileSystem.getFileStat(uri);
             if (!fileStat.isDirectory) {
-                throw new Error('A uri should point to the directory, uri: ' + uri);
+                throw new Error(`Expected a URI pointing to a directory. Was: ${uri}.`);
             }
             return fileStat;
-        });
+        } catch (error) {
+            throw error;
+        }
     }
 
     protected openWindow(uri: URI, options?: WorkspaceInput): void {
-        if (this.shouldPreserveWindow(options)) {
-            this.reloadWindow();
-        } else {
-            this.openNewWindow();
-        }
+        this.rootResolved.then(resolved => {
+            // The same window has to be preserved too (instead of opening a new one), if the workspace root is being set at the first time.
+            if (this.shouldPreserveWindow(options) || !resolved) {
+                this.reloadWindow();
+            } else {
+                this.openNewWindow();
+            }
+        });
     }
 
     protected reloadWindow(): void {
@@ -69,17 +100,14 @@ export class WorkspaceService {
     }
 
     protected shouldPreserveWindow(options?: WorkspaceInput): boolean {
-        if (options === undefined || options.preserveWindow === undefined) {
-            return false;
-        }
-        return options.preserveWindow;
+        return options !== undefined && !!options.preserveWindow;
     }
 
 }
 
 export interface WorkspaceInput {
     /**
-     * Test whether the same window should be used, by default false.
+     * Tests whether the same window should be used. By default it is `false`.
      */
     preserveWindow?: boolean;
 }
